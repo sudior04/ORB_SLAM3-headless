@@ -3,6 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 #include "System.h"
+#include <sophus/se3.hpp>
 
 using namespace std;
 
@@ -42,6 +43,8 @@ int main(int argc, char **argv)
     auto t_start = chrono::steady_clock::now();
     int frame_id = 0;
 
+    double last_log_time = -1.0;
+
     while (true)
     {
         cv::Mat frame;
@@ -56,26 +59,34 @@ int main(int argc, char **argv)
         auto now = chrono::steady_clock::now();
         double timestamp = chrono::duration<double>(now - t_start).count();
 
-        SLAM.TrackMonocular(frame, timestamp);
+       Sophus::SE3f Tcw = SLAM.TrackMonocular(frame, timestamp);
 
-        if (frame_id % 30 == 0)
+        if (timestamp - last_log_time >= 0.5)
         {
-            cout << "Processed frame: " << frame_id
-                 << " timestamp: " << timestamp << endl;
-        }
+            last_log_time = timestamp;
 
-        frame_id++;
+            if (!Tcw.matrix().isZero())
+            {
+                Sophus::SE3f Twc = Tcw.inverse();
+                Eigen::Vector3f pos = Twc.translation();
 
-        if (frame_id >= 900)
-        {
-            cout << "Reached 900 frames. Stop." << endl;
-            break;
+                cout << "POSE "
+                    << timestamp << " "
+                    << pos.x() << " "
+                    << pos.y() << " "
+                    << pos.z()
+                    << endl;
+            }
+            else
+            {
+                cout << "LOST " << timestamp << endl;
+            }
         }
     }
 
     SLAM.Shutdown();
 
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory_usb.txt");
+    // SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory_usb.txt");
 
     cout << "Done." << endl;
     cout << "Saved: KeyFrameTrajectory_usb.txt" << endl;
