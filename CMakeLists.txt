@@ -193,6 +193,14 @@ add_executable(mono_tum
         Examples/Monocular/mono_tum.cc)
 target_link_libraries(mono_tum ${PROJECT_NAME})
 
+add_executable(mono_image_headless
+        Examples/Monocular/mono_image_headless.cc)
+target_link_libraries(mono_image_headless ${PROJECT_NAME})
+
+add_executable(mono_camera_headless
+        Examples/Monocular/mono_camera_headless.cc)
+target_link_libraries(mono_camera_headless ${PROJECT_NAME})
+
 add_executable(mono_kitti
         Examples/Monocular/mono_kitti.cc)
 target_link_libraries(mono_kitti ${PROJECT_NAME})
