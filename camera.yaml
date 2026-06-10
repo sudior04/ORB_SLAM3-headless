@@ -16,7 +16,7 @@ Camera.k3: 4.717308401709578
 Camera.width: 640
 Camera.height: 480
 
-Camera.fps: 2.0
+Camera.fps: 30.0
 Camera.RGB: 1
 
 #--------------------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ Camera.RGB: 1
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 5000
+ORBextractor.nFeatures: 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid
 ORBextractor.scaleFactor: 1.2
@@ -36,8 +36,8 @@ ORBextractor.nLevels: 8
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast
-ORBextractor.iniThFAST: 3
-ORBextractor.minThFAST: 1
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     string sessionId = GenerateDatasetSessionId("camera");
 
     ORB_SLAM3::BackendSender backendSender(
-        "http://localhost:5000",
+        "192.168.5.31:5000",
         sessionId,
         "device_rov"
     );
@@ -112,26 +112,30 @@ int main(int argc, char **argv)
         }
 
         if (timestamp - last_log_time >= 0.5)
-        {
-            last_log_time = timestamp;
+{
+    last_log_time = timestamp;
 
-            if (!Tcw.matrix().isZero())
-            {
-                Sophus::SE3f Twc = Tcw.inverse();
-                Eigen::Vector3f pos = Twc.translation();
+    if (trackingState == ORB_SLAM3::Tracking::OK)
+    {
+        Sophus::SE3f Twc = Tcw.inverse();
+        Eigen::Vector3f pos = Twc.translation();
 
-                cout << "POSE "
-                    << timestamp << " "
-                    << pos.x() << " "
-                    << pos.y() << " "
-                    << pos.z()
-                    << endl;
-            }
-            else
-            {
-                cout << "LOST " << timestamp << endl;
-            }
-        }
+        cout << "POSE "
+             << timestamp << " "
+             << pos.x() << " "
+             << pos.y() << " "
+             << pos.z()
+             << endl;
+    }
+    else
+    {
+        cout << "NOT_TRACKING state="
+             << trackingState
+             << " time="
+             << timestamp
+             << endl;
+    }
+}
     }
 
     SLAM.Shutdown();
