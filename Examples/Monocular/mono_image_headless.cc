@@ -6,6 +6,7 @@
 
 #include <opencv2/opencv.hpp>
 #include "System.h"
+#include "BackendSender.h"
 
 using namespace std;
 
@@ -32,6 +33,25 @@ void LoadImages(
         if (!line.empty())
             timestamps.push_back(stod(line));
     }
+}
+
+string GenerateDatasetSessionId(const string& datasetName)
+{
+    time_t now = time(nullptr);
+
+    tm timeInfo{};
+    localtime_r(&now, &timeInfo);
+
+    char buffer[64];
+
+    strftime(
+        buffer,
+        sizeof(buffer),
+        "%Y%m%d_%H%M%S",
+        &timeInfo
+    );
+
+    return "dataset_" + datasetName + "_" + string(buffer);
 }
 
 int main(int argc, char **argv)
@@ -82,6 +102,14 @@ int main(int argc, char **argv)
         false
     );
 
+    string sessionId = GenerateDatasetSessionId("image_dataset");
+
+    ORB_SLAM3::BackendSender backendSender(
+        "192.168.1.4:5000",
+        sessionId,
+        "device_rov"
+    );
+
     for (size_t i = 0; i < image_names.size(); i++)
     {
         string image_path = image_folder + "/" + image_names[i];
@@ -106,6 +134,12 @@ int main(int argc, char **argv)
 
     SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+
+    backendSender.UploadKeyFrameTrajectory(
+    "KeyFrameTrajectory.txt",
+    "image_dataset",
+    "monocular"
+    );
 
     cout << "Done." << endl;
     cout << "Saved: CameraTrajectory.txt" << endl;

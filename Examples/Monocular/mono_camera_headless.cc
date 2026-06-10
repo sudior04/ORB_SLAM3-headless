@@ -4,8 +4,28 @@
 #include <opencv2/opencv.hpp>
 #include "System.h"
 #include <sophus/se3.hpp>
+#include "BackendSender.h"
 
 using namespace std;
+
+string GenerateDatasetSessionId(const string& datasetName)
+{
+    time_t now = time(nullptr);
+
+    tm timeInfo{};
+    localtime_r(&now, &timeInfo);
+
+    char buffer[64];
+
+    strftime(
+        buffer,
+        sizeof(buffer),
+        "%Y%m%d_%H%M%S",
+        &timeInfo
+    );
+
+    return datasetName + "_" + string(buffer);
+}
 
 int main(int argc, char **argv)
 {
@@ -38,12 +58,22 @@ int main(int argc, char **argv)
         false
     );
 
+    string sessionId = GenerateDatasetSessionId("camera");
+
+    ORB_SLAM3::BackendSender backendSender(
+        "http://localhost:5000",
+        sessionId,
+        "device_rov"
+    );
+
     cout << "USB camera opened. Running ORB-SLAM3 headless..." << endl;
 
     auto t_start = chrono::steady_clock::now();
     int frame_id = 0;
 
     double last_log_time = -1.0;
+
+    int frameCounter = 0;
 
     while (true)
     {
@@ -59,7 +89,27 @@ int main(int argc, char **argv)
         auto now = chrono::steady_clock::now();
         double timestamp = chrono::duration<double>(now - t_start).count();
 
-       Sophus::SE3f Tcw = SLAM.TrackMonocular(frame, timestamp);
+        Sophus::SE3f Tcw = SLAM.TrackMonocular(frame, timestamp);
+
+        int trackingState = SLAM.GetTrackingState();
+
+       if (trackingState == ORB_SLAM3::Tracking::OK)
+        {
+            frameCounter++;
+
+            if (frameCounter % 2 == 0)
+            {
+                backendSender.SendRealtimePose(
+                    timestamp,
+                    Tcw,
+                    "camera_2",
+                    30.0,
+                    frame.cols,
+                    frame.rows,
+                    "monocular"
+                );
+            }
+        }
 
         if (timestamp - last_log_time >= 0.5)
         {
